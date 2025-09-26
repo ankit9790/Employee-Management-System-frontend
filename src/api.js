@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:3000/api", // backend URL
+   // baseURL: "https://employee-management-system-backend-traf.onrender.com/api",
+   baseURL:"http://localhost:3000/api",
 });
 
 export default API;

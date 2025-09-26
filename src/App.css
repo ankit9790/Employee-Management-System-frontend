@@ -124,6 +124,7 @@
 .employee-header {
   font-weight: bold;
   background: #f0f3f5;
+  color: black !important;
   padding: 10px;
   border-radius: 6px;
   text-align: center;
