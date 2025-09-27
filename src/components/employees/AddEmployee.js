@@ -1,34 +1,55 @@
 import React, { useState, useEffect } from "react";
 import API from "../../api";
+
 function AddEmployee() {
-  const [form, setForm] = useState({ name: "", age: "", department_id: "", course_id: "" });
-  const [departments, setDepartments] = useState([]);
+  const [form, setForm] = useState({
+    name: "",
+    age: "",
+    course_id: "",
+    department_id: "",
+  });
   const [courses, setCourses] = useState([]);
+  const [departments, setDepartments] = useState([]);
 
+  // Fetch courses on mount
   useEffect(() => {
-    API.get("/departments")
-      .then((res) => setDepartments(res.data))
-      .catch((err) => console.error(err));
-
     API.get("/courses")
       .then((res) => setCourses(res.data))
       .catch((err) => console.error(err));
   }, []);
 
+  // Fetch departments whenever course_id changes
+  useEffect(() => {
+    if (form.course_id) {
+      API.get(`/departments/course/${form.course_id}`)
+        .then((res) => {
+          setDepartments(res.data);
+          // Reset department if selected department doesn't belong to new course
+          if (!res.data.some((d) => d.id === Number(form.department_id))) {
+            setForm((prev) => ({ ...prev, department_id: "" }));
+          }
+        })
+        .catch((err) => console.error(err));
+    } else {
+      setDepartments([]);
+      setForm((prev) => ({ ...prev, department_id: "" }));
+    }
+  }, [form.course_id]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const payload = {
-      ...form,
+      name: form.name,
       age: Number(form.age),
-      department_id: Number(form.department_id),
-      course_id: Number(form.course_id),
+      courseId: Number(form.course_id),
+      departmentId: Number(form.department_id),
     };
 
     API.post("/employees", payload)
       .then(() => {
         alert("Employee added successfully");
-        setForm({ name: "", age: "", department_id: "", course_id: "" });
+        setForm({ name: "", age: "", course_id: "", department_id: "" });
       })
       .catch((err) => {
         console.error(err);
@@ -54,18 +75,8 @@ function AddEmployee() {
           onChange={(e) => setForm({ ...form, age: e.target.value })}
           required
         />
-        <select
-          value={form.department_id}
-          onChange={(e) => setForm({ ...form, department_id: e.target.value })}
-          required
-        >
-          <option value="">Select Department</option>
-          {departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.department_name}
-            </option>
-          ))}
-        </select>
+
+        {/* Course dropdown */}
         <select
           value={form.course_id}
           onChange={(e) => setForm({ ...form, course_id: e.target.value })}
@@ -78,9 +89,28 @@ function AddEmployee() {
             </option>
           ))}
         </select>
+
+        {/* Department dropdown filtered by course */}
+        <select
+          value={form.department_id}
+          onChange={(e) => setForm({ ...form, department_id: e.target.value })}
+          required
+          disabled={!form.course_id}
+        >
+          <option value="">
+            {form.course_id ? "Select Department" : "Select course first"}
+          </option>
+          {departments.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.department_name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <button type="submit" className="submit-btn">Add Employee</button>
+      <button type="submit" className="submit-btn">
+        Add Employee
+      </button>
     </form>
   );
 }
